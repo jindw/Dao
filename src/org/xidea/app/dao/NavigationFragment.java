@@ -85,6 +85,8 @@ public class NavigationFragment extends Fragment {
 			mCurrentSelectedPosition = savedInstanceState
 					.getInt(STATE_SELECTED_POSITION);
 			mFromSavedInstanceState = true;
+		}else{
+			mCurrentSelectedPosition = ConfigController.getSection();
 		}
 
 	}
@@ -107,7 +109,7 @@ public class NavigationFragment extends Fragment {
 					@Override
 					public void onItemClick(AdapterView<?> parent, View view,
 							int position, long id) {
-						selectItem(position);
+						selectItem(position,true);
 					}
 				});
 		
@@ -117,12 +119,6 @@ public class NavigationFragment extends Fragment {
 				R.layout.main_drawer_item,
 				//android.R.layout.simple_list_item_activated_2,
 				android.R.id.text1, outline));
-//		mDrawerListView.setAdapter(new ArrayAdapter<String>(getActionBar()
-//				.getThemedContext(), android.R.layout.simple_list_item_1,
-//				android.R.id.text1, new String[] {
-//						getString(R.string.title_section1),
-//						getString(R.string.title_section2),
-//						getString(R.string.title_section3), }));
 		mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
 
 		return mDrawerListView;
@@ -223,10 +219,10 @@ public class NavigationFragment extends Fragment {
 		
 
 		// Select either the default item (0) or the last selected item.
-		selectItem(mCurrentSelectedPosition);
+		selectItem(mCurrentSelectedPosition,true);
 	}
 
-	private void selectItem(int position) {
+	void selectItem(int position,boolean fromSelf) {
 		mCurrentSelectedPosition = position;
 		if (mDrawerListView != null) {
 			mDrawerListView.setItemChecked(position, true);
@@ -234,7 +230,7 @@ public class NavigationFragment extends Fragment {
 		if (mDrawerLayout != null) {
 			mDrawerLayout.closeDrawer(mFragmentContainerView);
 		}
-		if (mCallbacks != null) {
+		if (mCallbacks != null && fromSelf) {
 			mCallbacks.onDrawerItemSelected(position);
 		}
 	}
@@ -325,10 +321,6 @@ public class NavigationFragment extends Fragment {
 	}
 
 	public String getTitle(int position) {
-		try{
 		return this.outline.get(position);
-		}catch(Exception e){
-			return e.toString();
-		}
 	}
 }

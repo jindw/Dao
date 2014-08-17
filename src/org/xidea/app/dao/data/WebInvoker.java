@@ -1,10 +1,14 @@
 package org.xidea.app.dao.data;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
+
+import org.xidea.app.dao.Main;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -37,8 +41,24 @@ public class WebInvoker {
 		webview.setWebChromeClient(new WebChromeClient() {
 			public boolean onJsPrompt(WebView view, String url, String message,
 					String defaultValue, final JsPromptResult result) {
-				if (message.startsWith("js-invoke://")) {
+				if (message!=null && message.startsWith("js-invoke://")) {
 					// TODO: 解析通讯协议，获得要调用的对象的方法和调用参数，完成调用厚返回数据
+					if(defaultValue != null && defaultValue .startsWith("event:fling@")){
+						String json = defaultValue.substring(defaultValue.indexOf('@')+1);
+						try {
+							json = URLDecoder.decode(json, "UTF-8");
+							String xy = json.substring(1,json.length()-1);
+							int p = xy.indexOf(',');
+							int x = Integer.parseInt(xy.substring(0,p));
+							int y = Integer.parseInt(xy.substring(p+1));
+							if(Math.abs(x)>Math.abs(y)+50){
+								Main.instance.jump(x>0?1:-1);
+							}
+							
+							
+						} catch (UnsupportedEncodingException e) {
+						}
+					}
 					result.confirm("");
 					return true;
 				} else {
