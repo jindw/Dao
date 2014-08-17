@@ -1,0 +1,18 @@
+section em{
+	font-size:15;
+	opacity:0.5;
+}
+section p{
+	font-size:11px;
+	opacity:0.5;
+}
+#original em{
+	opacity:1;
+	font-size:15;
+}
+#original p{
+	opacity:1;
+	font-size:22px;
+	background:#EEE;
+	
+}
