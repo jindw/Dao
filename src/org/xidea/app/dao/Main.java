@@ -1,6 +1,10 @@
 package org.xidea.app.dao;
 
+import java.util.List;
+import java.util.Map;
+
 import org.xidea.app.dao.R;
+import org.xidea.app.dao.data.ContentHelper;
 
 import android.app.Activity;
 import android.support.v7.app.ActionBarActivity;
@@ -47,56 +51,17 @@ public class Main extends ActionBarActivity implements
 		mDrawerFragment = (NavigationFragment) getSupportFragmentManager()
 				.findFragmentById(R.id.navigation_drawer);
 		title = getTitle();
-		
-		GestureHelper.enableFliper(findViewById(R.id.container), new GestureDetector.OnGestureListener() {
-			
-			@Override
-			public boolean onSingleTapUp(MotionEvent e) {
-				return false;
-			}
-			
-			@Override
-			public void onShowPress(MotionEvent e) {
-				
-			}
-			
-			@Override
-			public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
-					float distanceY) {
-				return false;
-			}
-			
-			@Override
-			public void onLongPress(MotionEvent e) {
-				
-			}
-			
-			@Override
-			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
-					float velocityY) {
-				if(Math.abs(velocityX) > Math.abs(velocityY)){
-					int position = ConfigController.getSection()+(velocityX>0?1:-1);
-					onDrawerItemSelected(position>0?position:0);
-				}
-				return false;
-			}
-			
-			@Override
-			public boolean onDown(MotionEvent e) {
-				return false;
-			}
-		});
 
 		// Set up the drawer.
 		mDrawerFragment.setUp(R.id.navigation_drawer,
 				(DrawerLayout) findViewById(R.id.drawer_layout));
 		initSlidingDrawer();
 	}
+
 	public void jump(int offset) {
-			int position = ConfigController.getSection()+offset;
-			onDrawerItemSelected(position>0?position:0);
+		int position = ConfigController.getSection() + offset;
+		onDrawerItemSelected(position > 0 ? position : 0);
 	}
-	
 
 	@SuppressWarnings("deprecation")
 	private void initSlidingDrawer() {
@@ -150,6 +115,8 @@ public class Main extends ActionBarActivity implements
 		}
 	}
 
+	private ContentFragment contentFragment;
+
 	@Override
 	public void onDrawerItemSelected(int position) {
 		try {
@@ -162,15 +129,18 @@ public class Main extends ActionBarActivity implements
 		try {
 			getActionBar().setTitle(title);
 
-			FragmentManager fragmentManager = getSupportFragmentManager();
-			fragmentManager
-					.beginTransaction()
-					.replace(
-							R.id.container,
-							ContentFragment.newInstance(position,
-									title.toString())).commit();
-
+			int oldPosition = ConfigController.getSection();
 			ConfigController.setSection(position);
+			if (this.contentFragment == null) {
+				FragmentManager fragmentManager = getSupportFragmentManager();
+				this.contentFragment = ContentFragment.newInstance(position,
+						title.toString());
+				fragmentManager.beginTransaction()
+						.replace(R.id.container, contentFragment).commit();
+			}else if(oldPosition != position){
+				contentFragment.changeTo(position);
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -208,5 +178,14 @@ public class Main extends ActionBarActivity implements
 		return super.onOptionsItemSelected(item);
 	}
 
+	private static ContentHelper content = new ContentHelper();
+
+	public List<String> getOutline() {
+		return content.getOutline();
+	}
+
+	public Map<String, String> getChapterContent(int chapterIndex) {
+		return content.getContent().get(chapterIndex);
+	}
 
 }

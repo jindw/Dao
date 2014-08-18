@@ -33,7 +33,7 @@
         android:layout_marginStart="?android:attr/listPreferredItemPaddingStart"
         android:layout_marginTop="4dip"
     	android:layout_marginBottom="4dip"
-    	android:textSize="8pt"
+    	android:textSize="12pt"
     	android:textColor="#FFF"
         android:textAppearance="?android:attr/ellipsize"
     />

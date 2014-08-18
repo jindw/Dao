@@ -65,7 +65,7 @@ public class NavigationFragment extends Fragment {
 	private boolean mFromSavedInstanceState;
 	private boolean mUserLearnedDrawer;
 
-	private List<String> outline=new ContentHelper().readDefaultOutline();
+//	private List<String> outline= readDefaultOutline();
 
 	public NavigationFragment() {
 	}
@@ -118,7 +118,7 @@ public class NavigationFragment extends Fragment {
 				//R.layout.outline_item,
 				R.layout.main_drawer_item,
 				//android.R.layout.simple_list_item_activated_2,
-				android.R.id.text1, outline));
+				android.R.id.text1, Main.instance.getOutline()));
 		mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
 
 		return mDrawerListView;
@@ -321,6 +321,6 @@ public class NavigationFragment extends Fragment {
 	}
 
 	public String getTitle(int position) {
-		return this.outline.get(position);
+		return Main.instance.getOutline().get(position);
 	}
 }

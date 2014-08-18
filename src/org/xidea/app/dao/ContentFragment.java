@@ -1,5 +1,7 @@
 package org.xidea.app.dao;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
@@ -24,9 +26,6 @@ import android.widget.TextView;
 
 public class ContentFragment extends Fragment {
 	public static final String CHAPTER_INDEX = "chapter_index";
-	public static final String CHAPTER_TITLE = "chapter_title";
-	private static final List<Map<String, String>> result = new ContentHelper()
-			.readDefaultContent();
 	private int chapterIndex;
 	private CharSequence chapterTitle;
 	MediaHelper media = new MediaHelper();
@@ -39,11 +38,25 @@ public class ContentFragment extends Fragment {
 		ContentFragment fragment = new ContentFragment();
 		Bundle args = new Bundle();
 		args.putInt(CHAPTER_INDEX, sectionNumber);
-		args.putString(CHAPTER_TITLE, sectionTitle);
 		fragment.setArguments(args);
 		return fragment;
 	}
 
+	public void changeTo(int chapterIndex) {
+		this.chapterIndex = chapterIndex;
+		getArguments().putInt(CHAPTER_INDEX, chapterIndex);
+
+		View contentView = this.getView().findViewById(R.id.content);
+		WebView webview = (WebView) contentView;
+
+		String body = loadContent(chapterIndex);
+		media.setChapterIndex(chapterIndex);
+		try {
+			webview.loadUrl("javascript:document.body.innerHTML=decodeURIComponent('"+URLEncoder.encode(body, "UTF-8")+"'.replace(/\\+/g,' '))");
+		} catch (UnsupportedEncodingException e) {
+		}
+	}
+	
 	public ContentFragment() {
 	}
 
@@ -52,7 +65,7 @@ public class ContentFragment extends Fragment {
 		super.onCreate(savedInstanceState);
 		this.chapterIndex = getArguments().getInt(CHAPTER_INDEX, -1);
 		if (this.chapterIndex >= 0) {
-			this.chapterTitle = getArguments().getString(CHAPTER_TITLE);
+			this.chapterTitle = Main.instance.getOutline().get(chapterIndex);
 		} else {
 			// TODO:
 			// init default content
@@ -64,7 +77,26 @@ public class ContentFragment extends Fragment {
 			Bundle savedInstanceState) {
 		View rootView = inflater.inflate(R.layout.content_fragment, container,
 				false);
-		Map<String, String> content = result.get(chapterIndex);
+		String body = loadContent(chapterIndex);
+		
+		this.getActivity().setTitle(chapterTitle);
+
+		View contentView = rootView.findViewById(R.id.content);
+		WebView webview = (WebView) contentView;
+		WebInvoker.setup(webview);
+		// file:///android_asset/
+		String html = "<html><head><script src='file:///android_asset/html/init.js'></script>"
+						+ "<link rel='stylesheet' type='text/css' href='file:///android_asset/html/default.css' /></head>"
+						+ "<body style='font-size:20px'>" + body + "</body></html>";
+		webview.loadDataWithBaseURL("file:///android_asset/html/", html,
+				"text/html", "utf-8", null);
+		
+		media.setChapterIndex(chapterIndex);
+		return rootView;
+	}
+
+	private static String loadContent(int chapterIndex) {
+		Map<String, String> content = Main.instance.getChapterContent(chapterIndex);
 		StringBuilder buf = new StringBuilder();
 		for (Map.Entry<String, String> entry : content.entrySet()) {
 			if (buf.length() == 0) {
@@ -77,26 +109,12 @@ public class ContentFragment extends Fragment {
 						+ "</section>");
 			}
 		}
-		this.getActivity().setTitle(chapterTitle);
 
-		View contentView = rootView.findViewById(R.id.content);
-		String body = buf.toString();
-		WebView webview = (WebView) contentView;
-		WebInvoker.setup(webview);
-		// file:///android_asset/
-		String html = "<html><head><script src='file:///android_asset/html/init.js'></script>"
-				+ "<link rel='stylesheet' type='text/css' href='file:///android_asset/html/default.css' /></head>"
-				+ "<body style='font-size:20px'>" + body + "</body></html>";
-		webview.loadDataWithBaseURL("file:///android_asset/html/", html,
-				"text/html", "utf-8", null);
+		return buf.toString();
 
-		if(ConfigController.isReading()){
-			media.initMedia((Main)this.getActivity(),chapterIndex);
-		}
-		return rootView;
 	}
 
-	private String genChapter(String title, String value) {
+	private static String genChapter(String title, String value) {
 		value = value.replace("\n", "<br/>");
 		return "<em>" + title + "</em>\n<p>" + value + "</p>\n";
 	}
@@ -118,5 +136,6 @@ public class ContentFragment extends Fragment {
 		super.onResume();
 		this.media.resume();
 	}
+
 
 }

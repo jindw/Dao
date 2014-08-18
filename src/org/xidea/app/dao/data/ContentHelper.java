@@ -36,34 +36,52 @@ public class ContentHelper {
 	public static final String CN = "零一二三四五六七八九十";
 
 	public static void main(String[] args) {
-		List<Map<String, String>> data = new ContentHelper()
-				.readDefaultContent();
+		ContentHelper data = new ContentHelper();
 
+		System.out.println(data.outline);
 	}
 
-	public List<Map<String, String>> readDefaultContent() {
+	private List<Map<String, String>> content;
+	private List<String> outline;
+	
+	/**
+	 * @return the content
+	 */
+	public List<Map<String, String>> getContent() {
+		return content;
+	}
+
+	/**
+	 * @return the outline
+	 */
+	public List<String> getOutline() {
+		return outline;
+	}
+
+	public ContentHelper(){
 
 		InputStream in = ContentHelper.class
 				.getResourceAsStream("default.data");
 		try {
 			try {
-				return readContent(new InputStreamReader(in, "UTF-8"));
+				readContent(new InputStreamReader(in, "UTF-8"));
 			} finally {
 				in.close();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			return null;
 		}
 	}
 
-	public List<Map<String, String>> readContent(Reader source)
+	protected void readContent(Reader source)
 			throws IOException {
+		this.outline = new ArrayList<String>();
+		this.content = new ArrayList<Map<String, String>>();
+		
 		BufferedReader in = new BufferedReader(source);
 		String line;
 		int index = 0;// header
 		String[] fields = null;
-		List<Map<String, String>> result = new ArrayList<Map<String, String>>();
 		Map<String, String> current = new LinkedHashMap<String, String>();
 
 		while ((line = in.readLine()) != null) {
@@ -80,9 +98,10 @@ public class ContentHelper {
 				continue;
 			}
 			if (line.startsWith("#")) {
+				this.outline.add(toChineseChapter(outline.size()) + line.substring(1));
 				index = 0;
 				if(current.size()>0){
-				result.add(current);
+				content.add(current);
 				current = new LinkedHashMap<String, String>();
 				}
 				continue;
@@ -93,49 +112,38 @@ public class ContentHelper {
 					+ line);
 		}
 		if (!current.isEmpty()) {
-			result.add(current);
-		}
-		return result;
-	}
-
-	public List<String> readOutline(Reader source) throws IOException {
-		BufferedReader in = new BufferedReader(source);
-		List<String> result = new ArrayList<String>(81);
-		String line;
-		int c = 1;
-		while ((line = in.readLine()) != null) {
-			int c1 = c / 10;
-			int c2 = c % 10;
-			StringBuilder buf = new StringBuilder("第");
-			if (c1 >= 1) {
-				if (c1 > 1) {
-					buf.append(CN.charAt(c1));
-				}
-				buf.append(CN.charAt(10));
-			}
-			if (c2 > 0) {
-				buf.append(CN.charAt(c2));
-			}
-			buf.append("章\t").append(line);
-			result.add(buf.toString());
-			c++;
-		}
-		return result;
-	}
-
-	public List<String> readDefaultOutline() {
-		InputStream in = ContentHelper.class
-				.getResourceAsStream("default.index");
-		try {
-			try {
-				return readOutline(new InputStreamReader(in, "UTF-8"));
-			} finally {
-				in.close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
+			content.add(current);
 		}
 	}
+//
+//	private List<String> readOutline(Reader source) throws IOException {
+//		BufferedReader in = new BufferedReader(source);
+//		List<String> result = new ArrayList<String>(81);
+//		String line;
+//		int c = 1;
+//		while ((line = in.readLine()) != null) {
+//			StringBuilder buf = new StringBuilder();
+//			buf.append(toChineseChapter(c));
+//			buf.append("\t").append(line);
+//			result.add(buf.toString());
+//			c++;
+//		}
+//		return result;
+//	}
 
+	private String toChineseChapter(int c) {
+		StringBuilder buf = new StringBuilder("第");
+		int c1 = c / 10;
+		int c2 = c % 10;
+		if (c1 >= 1) {
+			if (c1 > 1) {
+				buf.append(CN.charAt(c1));
+			}
+			buf.append(CN.charAt(10));
+		}
+		if (c2 > 0) {
+			buf.append(CN.charAt(c2));
+		}
+		return buf.append("章 ").toString();
+	}
 }

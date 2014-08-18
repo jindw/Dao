@@ -11,68 +11,96 @@ public class MediaHelper {
 	private SeekBar seekBar;
 	private int startTime;
 	private Updater updater;
+	private int chapterIndex = -1;
 	final static Handler handler = new Handler();
 
-	public void initMedia(final Main activity, int chapterIndex) {
+	public void setChapterIndex(int chapterIndex) {
+		if (chapterIndex != this.chapterIndex) {
+			this.chapterIndex = chapterIndex;
+
+			this.resetMedia(Main.instance, chapterIndex);
+		} else {
+			if (ConfigController.isReading()) {
+				if (mediaMusic != null && !mediaMusic.isPlaying()) {
+					mediaMusic.start();
+				}
+			} else {
+				if (mediaMusic != null && mediaMusic.isPlaying()) {
+					mediaMusic.stop();
+				}
+			}
+		}
+	};
+
+	private void resetMedia(final Main activity, int chapterIndex) {
 		try {
-
-			this.startTime = getStartTime(chapterIndex);;
-			this.mediaMusic = MediaPlayer.create(activity,
-					(Integer) R.raw.class.getField("cp" + (chapterIndex + 1))
-							.get(null));
-			// mediaMusic.prepare();
-			mediaMusic.start();
-			mediaMusic.pause();
-			new SeekAndStart().startAt(startTime);
-			seekBar = (SeekBar) activity.findViewById(R.id.speekSeekBar);
-			seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-				@Override
-				public void onStopTrackingTouch(SeekBar seekBar) {
-
-					if (ConfigController.isReading()) {
-						int dest = seekBar.getProgress();
-						int mMax = mediaMusic.getDuration();
-						int sMax = seekBar.getMax();
-						mediaMusic.seekTo(startTime + (mMax - startTime) * dest
-								/ sMax);
+			if (ConfigController.isReading()) {
+				this.startTime = getStartTime(chapterIndex);
+				if (mediaMusic != null) {
+					try {
+						mediaMusic.stop();
+						mediaMusic.release();
+					} catch (Exception e) {
 					}
 				}
+				this.mediaMusic = MediaPlayer.create(
+						activity,
+						(Integer) R.raw.class.getField(
+								"cp" + (chapterIndex + 1)).get(null));
+				// mediaMusic.prepare();
+				mediaMusic.start();
+				mediaMusic.pause();
+				new SeekAndStart().startAt(startTime);
+				seekBar = (SeekBar) activity.findViewById(R.id.speekSeekBar);
+				seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+					@Override
+					public void onStopTrackingTouch(SeekBar seekBar) {
 
-				@Override
-				public void onStartTrackingTouch(SeekBar seekBar) {
-				}
-
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress,
-						boolean fromUser) {
-					if (fromUser) {
-						new SeekAndStart().startAt(startTime);
-					}
-				}
-			});
-			mediaMusic
-					.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-						@Override
-						public void onCompletion(MediaPlayer mp) {
-
-							if(ConfigController.isAutoFlip()){
-								activity.onDrawerItemSelected(ConfigController.getSection()+1);
-							}
+						if (ConfigController.isReading()) {
+							int dest = seekBar.getProgress();
+							int mMax = mediaMusic.getDuration();
+							int sMax = seekBar.getMax();
+							mediaMusic.seekTo(startTime + (mMax - startTime)
+									* dest / sMax);
 						}
-					});
+					}
 
-			// 每秒钟更新一次
+					@Override
+					public void onStartTrackingTouch(SeekBar seekBar) {
+					}
+
+					@Override
+					public void onProgressChanged(SeekBar seekBar,
+							int progress, boolean fromUser) {
+						if (fromUser) {
+							new SeekAndStart().startAt(startTime);
+						}
+					}
+				});
+				mediaMusic
+						.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+							@Override
+							public void onCompletion(MediaPlayer mp) {
+
+								if (ConfigController.isAutoFlip()) {
+									activity.onDrawerItemSelected(ConfigController
+											.getSection() + 1);
+								}
+							}
+						});
+
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	private int getStartTime(int chapterIndex) {
-		if(chapterIndex ==0 ){
+		if (chapterIndex == 0) {
 			return 6000;
-		}else if(chapterIndex <10 || (chapterIndex+1) %10 == 0){
+		} else if (chapterIndex < 10 || (chapterIndex + 1) % 10 == 0) {
 			return 2200;
-		}else{
+		} else {
 			return 3000;
 		}
 	}
@@ -90,12 +118,14 @@ public class MediaHelper {
 
 	public void resume() {
 		try {
-			this.mediaMusic.start();
-			if (updater != null) {
-				updater.stop();
+			if (ConfigController.isReading()) {
+				this.mediaMusic.start();
+				if (updater != null) {
+					updater.stop();
+				}
+				updater = new Updater();
+				updater.start();
 			}
-			updater = new Updater();
-			updater.start();
 		} catch (Exception e) {
 		}
 	}
@@ -146,6 +176,6 @@ public class MediaHelper {
 			mediaMusic.setOnSeekCompleteListener(this);
 			mediaMusic.seekTo(seek);
 		}
-	};
+	}
 
 }
